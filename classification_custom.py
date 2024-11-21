@@ -1,20 +1,27 @@
 from ultralytics import YOLO
-import time
+from ultralytics import settings
 
-# Load a model
-model = YOLO('yolov8n-cls.pt')  # load a pretrained model (recommended for training)
+# Load the YOLO11 model
+model = YOLO("yolo11n.pt")
 
-# print('here')
-# time.sleep(10)
+# Export the model to TF SavedModel format
+model.export(format="saved_model")  
 
-# Train the model
-results = model.train(data='custom_data', epochs=100, imgsz=224)
+# Load the exported TF SavedModel model
+tf_savedmodel_model = YOLO("./yolo11n.pt")
+
+import onnx
+import onnx_tf
+
+# Load ONNX model
+onnx_model = onnx.load('yolo11n.onnx')
+
+# Convert ONNX model to TensorFlow format
+tf_model = onnx_tf.backend.prepare(onnx_model)
+
+# Export TensorFlow model
+tf_model.export_graph("yolo11n.pb") 
 
 
-
-"""
-In root directory there is a folder called datasets. It contains a folder named custom_data which contains a train folder and a test folder. 
-Each contain folders for each class which contain the images. 
-
-
-"""
+# Run inference
+results = tf_savedmodel_model("https://ultralytics.com/images/bus.jpg")
